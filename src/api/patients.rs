@@ -1,67 +1,82 @@
-use actix_web::{web, HttpResponse, post, get};
-use utoipa::OpenApi;
-use crate::domain::models::hospital::Hospital;
-use crate::domain::repositories::HospitalRepository;
-use crate::application::use_cases::hospital_use_cases::HospitalUseCases;
 use uuid::Uuid;
+use actix_web::{get, post, put, delete, web, HttpResponse};
+use crate::application::usecases::patient_use_cases::PatientUseCases;
+use crate::domain::models::patient::Patient;
+use crate::domain::repositories::patient_repository::PatientRepository;
 
-#[utoipa::path(
-    post,
-    path = "/api/v1/hospitals",
-    tag = "hospitals",
-    request_body = Hospital,
-    responses(
-        (status = 201, description = "Hospital created successfully", body = Hospital),
-        (status = 400, description = "Invalid input")
-    )
-)]
-#[post("/hospitals")]
-pub async fn create_hospital(
-    hospital: web::Json<Hospital>,
-    use_cases: web::Data<HospitalUseCases<impl HospitalRepository>>,
+#[post("/patients")]
+pub async fn create_patient(
+    patient: web::Json<Patient>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
 ) -> HttpResponse {
-    match use_cases.create_hospital(hospital.into_inner()).await {
+    match use_cases.create_patient(patient.into_inner()).await {
         Ok(created) => HttpResponse::Created().json(created),
-        Err(_) => HttpResponse::BadRequest().finish(),
+        Err(err) => HttpResponse::BadRequest().json(format!("Error: {:?}", err)),
     }
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/hospitals",
-    tag = "hospitals",
-    responses(
-        (status = 200, description = "List of hospitals", body = Vec<Hospital>),
-        (status = 500, description = "Internal server error")
-    )
-)]
-#[get("/hospitals")]
-pub async fn get_hospitals(
-    use_cases: web::Data<HospitalUseCases<impl HospitalRepository>>,
+#[get("/patients")]
+pub async fn get_patients(
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
 ) -> HttpResponse {
-    match use_cases.list_hospitals().await {
-        Ok(hospitals) => HttpResponse::Ok().json(hospitals),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    match use_cases.list_patients().await {
+        Ok(patients) => HttpResponse::Ok().json(patients),
+        Err(err) => HttpResponse::InternalServerError().json(format!("Error: {:?}", err)),
     }
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/v1/hospitals/{id}",
-    tag = "hospitals",
-    responses(
-        (status = 200, description = "Hospital found", body = Hospital),
-        (status = 404, description = "Hospital not found")
-    )
-)]
-#[get("/hospitals/{id}")]
-pub async fn get_hospital(
+#[get("/patients/{id}")]
+pub async fn get_patient(
     id: web::Path<Uuid>,
-    use_cases: web::Data<HospitalUseCases<impl HospitalRepository>>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
 ) -> HttpResponse {
-    match use_cases.get_hospital(id.into_inner()).await {
-        Ok(Some(hospital)) => HttpResponse::Ok().json(hospital),
-        Ok(None) => HttpResponse::NotFound().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    match use_cases.get_patient(id.into_inner()).await {
+        Ok(Some(patient)) => HttpResponse::Ok().json(patient),
+        Ok(None) => HttpResponse::NotFound().json("Patient not found"),
+        Err(err) => HttpResponse::InternalServerError().json(format!("Error: {:?}", err)),
+    }
+}
+
+#[put("/patients")]
+pub async fn update_patient(
+    patient: web::Json<Patient>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
+) -> HttpResponse {
+    match use_cases.update_patient(patient.into_inner()).await {
+        Ok(updated) => HttpResponse::Ok().json(updated),
+        Err(err) => HttpResponse::BadRequest().json(format!("Error: {:?}", err)),
+    }
+}
+
+#[delete("/patients/{id}")]
+pub async fn delete_patient(
+    id: web::Path<Uuid>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
+) -> HttpResponse {
+    match use_cases.delete_patient(id.into_inner()).await {
+        Ok(_) => HttpResponse::NoContent().finish(),
+        Err(err) => HttpResponse::InternalServerError().json(format!("Error: {:?}", err)),
+    }
+}
+
+#[get("/patients/hospital/{hospital_id}")]
+pub async fn get_patients_by_hospital(
+    hospital_id: web::Path<Uuid>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
+) -> HttpResponse {
+    match use_cases.get_patients_by_hospital(hospital_id.into_inner()).await {
+        Ok(patients) => HttpResponse::Ok().json(patients),
+        Err(err) => HttpResponse::InternalServerError().json(format!("Error: {:?}", err)),
+    }
+}
+
+#[get("/patients/doctor/{doctor_id}")]
+pub async fn get_patients_by_doctor(
+    doctor_id: web::Path<Uuid>,
+    use_cases: web::Data<PatientUseCases<Box<dyn PatientRepository>>>,
+) -> HttpResponse {
+    match use_cases.get_patients_by_doctor(doctor_id.into_inner()).await {
+        Ok(patients) => HttpResponse::Ok().json(patients),
+        Err(err) => HttpResponse::InternalServerError().json(format!("Error: {:?}", err)),
     }
 }

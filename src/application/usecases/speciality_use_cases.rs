@@ -1,12 +1,15 @@
 use uuid::Uuid;
-use crate::domain::models::speciality::Speciality;
-use crate::domain::repositories::Repository;
+use crate::domain::repositories::SpecialityRepository;
+use crate::domain::models::Speciality;
+use crate::domain::error::Error;
 
-pub struct SpecialityUseCases<R: Repository<Speciality>> {
+
+
+pub struct SpecialityUseCases<R: SpecialityRepository> {
     repository: R,
 }
 
-impl<R: Repository<Speciality>> SpecialityUseCases<R> {
+impl<R: SpecialityRepository> SpecialityUseCases<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }

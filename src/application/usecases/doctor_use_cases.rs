@@ -1,12 +1,13 @@
 use uuid::Uuid;
-use crate::domain::models::doctor::Doctor;
-use crate::domain::repositories::Repository;
+use crate::domain::repositories::DoctorRepository;
+use crate::domain::models::doctor::{Doctor, DoctorStatus};
+use crate::domain::error::Error;
 
-pub struct DoctorUseCases<R: Repository<Doctor>> {
+pub struct DoctorUseCases<R: DoctorRepository> {
     repository: R,
 }
 
-impl<R: Repository<Doctor>> DoctorUseCases<R> {
+impl<R: DoctorRepository> DoctorUseCases<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }
@@ -34,14 +35,17 @@ impl<R: Repository<Doctor>> DoctorUseCases<R> {
     pub async fn get_doctors_by_hospital(&self, hospital_id: Uuid) -> Result<Vec<Doctor>, Error> {
         self.repository.find_by_hospital(hospital_id).await
     }
-
+    
     pub async fn get_doctors_by_speciality(&self, speciality_id: Uuid) -> Result<Vec<Doctor>, Error> {
         self.repository.find_by_speciality(speciality_id).await
     }
-
+    
     pub async fn update_doctor_status(&self, id: Uuid, status: DoctorStatus) -> Result<Doctor, Error> {
-        let mut doctor = self.get_doctor(id).await?.ok_or(Error::NotFound)?;
-        doctor.status = status;
-        self.update_doctor(doctor).await
+        let doctor = self.get_doctor(id).await?.ok_or(Error::NotFound)?;
+        let updated_doctor = Doctor {
+            status,
+            ..doctor
+        };
+        self.update_doctor(updated_doctor).await
     }
 }

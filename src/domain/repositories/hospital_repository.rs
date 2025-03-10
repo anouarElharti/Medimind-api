@@ -4,13 +4,33 @@ use crate::domain::error::Error;
 use crate::domain::models::hospital::Hospital;
 
 #[async_trait]
-pub trait HospitalRepository {
+pub trait HospitalRepository: Send + Sync {
     async fn create(&self, hospital: Hospital) -> Result<Hospital, Error>;
     async fn update(&self, hospital: Hospital) -> Result<Hospital, Error>;
     async fn delete(&self, id: Uuid) -> Result<(), Error>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Hospital>, Error>;
     async fn find_all(&self) -> Result<Vec<Hospital>, Error>;
     async fn find_by_speciality(&self, speciality_id: Uuid) -> Result<Vec<Hospital>, Error>;
-    async fn find_by_doctor(&self, doctor_id: Uuid) -> Result<Vec<Hospital>, Error>;
-    async fn find_by_patient(&self, patient_id: Uuid) -> Result<Vec<Hospital>, Error>;
+}
+
+#[async_trait]
+impl HospitalRepository for Box<dyn HospitalRepository> {
+    async fn create(&self, hospital: Hospital) -> Result<Hospital, Error> {
+        (**self).create(hospital).await
+    }
+    async fn update(&self, hospital: Hospital) -> Result<Hospital, Error> {
+        (**self).update(hospital).await
+    }
+    async fn delete(&self, id: Uuid) -> Result<(), Error> {
+        (**self).delete(id).await
+    }
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Hospital>, Error> {
+        (**self).find_by_id(id).await
+    }
+    async fn find_all(&self) -> Result<Vec<Hospital>, Error> {
+        (**self).find_all().await
+    }
+    async fn find_by_speciality(&self, speciality_id: Uuid) -> Result<Vec<Hospital>, Error> {
+        (**self).find_by_speciality(speciality_id).await
+    }
 }

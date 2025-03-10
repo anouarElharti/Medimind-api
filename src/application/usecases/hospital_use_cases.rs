@@ -1,13 +1,14 @@
 use uuid::Uuid;
+use crate::domain::repositories::HospitalRepository;
 use crate::domain::models::hospital::Hospital;
-use crate::domain::repositories::Repository;
+use crate::domain::error::Error;
 
-pub struct HospitalUseCases<R: Repository<Hospital>> {
-    repository: R,
+pub struct HospitalUseCases<R: ?Sized + HospitalRepository> {
+    repository: Box<R>,
 }
 
-impl<R: Repository<Hospital>> HospitalUseCases<R> {
-    pub fn new(repository: R) -> Self {
+impl<R: ?Sized + HospitalRepository> HospitalUseCases<R> {
+    pub fn new(repository: Box<R>) -> Self {
         Self { repository }
     }
 

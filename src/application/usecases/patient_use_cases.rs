@@ -1,12 +1,13 @@
 use uuid::Uuid;
+use crate::domain::error::Error;
 use crate::domain::models::patient::Patient;
-use crate::domain::repositories::Repository;
+use crate::domain::repositories::PatientRepository;
 
-pub struct PatientUseCases<R: Repository<Patient>> {
+pub struct PatientUseCases<R: PatientRepository> {
     repository: R,
 }
 
-impl<R: Repository<Patient>> PatientUseCases<R> {
+impl<R: PatientRepository> PatientUseCases<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }
